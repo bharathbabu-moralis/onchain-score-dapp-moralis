@@ -1,0 +1,124 @@
+/* General Container */
+.home-container {
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: #f0f4f8; /* Lighter background */
+  color: #2c3e50;
+}
+
+/* Hero Section */
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #ffffff;
+  color: #2c3e50;
+  padding: 40px 20px;
+  text-align: center;
+  border-radius: 12px;
+  margin-bottom: 50px;
+  margin-top: 60px;
+  width: 80%; /* Increased width */
+  max-width: 1400px; /* Increased max-width to accommodate the title and 3 cards */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.hero-content h1 {
+  font-size: 4.3rem; /* Bigger title */
+  margin-bottom: 20px;
+  color: black;
+}
+
+.hero-description {
+  font-size: 1.3rem;
+  margin-bottom: 30px;
+  max-width: 900px;
+  color: black;
+  text-align: center; /* Center the description text */
+}
+
+.input-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  margin-bottom: 50px; /* Add spacing below the form */
+}
+
+.input-box {
+  padding: 18px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  border: 2px solid #3498db;
+  width: 100%;
+  max-width: 480px;
+  color: #2c3e50;
+}
+
+.cta-button {
+  padding: 14px 36px;
+  background-color: #3498db;
+  color: #ffffff;
+  font-size: 1.3rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+  background-color: #2980b9;
+}
+
+/* Features Section */
+.features-section {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  max-width: 1200px; /* Reduced width to fit the smaller cards */
+  margin-bottom: 40px;
+  gap: 20px; /* Add space between the cards */
+}
+
+.feature-card {
+  background-color: #ffffff;
+  padding: 20px; /* Reduced padding */
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  width: 28%; /* Reduced width of the cards */
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.feature-card h3 {
+  font-size: 1.4rem;
+  font-weight:550;
+  margin-bottom: 10px;
+  color: black;
+}
+
+.feature-card p {
+  font-size: 1rem;
+  color: #7f8c8d;
+}
+
+/* Footer */
+.footer-section {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.moralis-logo {
+  width: 250px; /* Increase the width */
+  height: auto; /* Maintain aspect ratio */
+  margin-top: 10px;
+}
+
