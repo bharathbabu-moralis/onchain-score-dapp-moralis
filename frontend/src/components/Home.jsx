@@ -84,7 +84,10 @@ const Home = () => {
     <div className="home-container">
       <section className="hero-section">
         <div style={{ textAlign: "center" }} className="hero-content">
-          <h1 style={{ fontWeight: "560" }}> Discover Your Onchain Score 📈 </h1>
+          <h1 style={{ fontWeight: "560" }}>
+            {" "}
+            Find Out Your Onchain Score 📈{" "}
+          </h1>
           <p
             style={{
               textAlign: "center",
@@ -93,8 +96,9 @@ const Home = () => {
             }}
             className="hero-description"
           >
-            Uncover the full story of your wallet! Analyze your multi-chain
-            interactions, DeFi positions, NFT holdings, and more.
+            Your wallet's Onchain Score measures more than just
+            transactions—discover your performance across multiple chains, DeFi
+            engagement, risk, and more!
           </p>
 
           <form className="input-form" onSubmit={handleSubmit}>
@@ -107,30 +111,33 @@ const Home = () => {
               required
             />
             <button type="submit" className="cta-button">
-              Check My Onchain Score 🚀
+              Fetch Onchain Score
             </button>
           </form>
 
           {/* Display an error if the input is invalid */}
-          {error && <p style={{ color: "red"}}>{error}</p>}
+          {error && <p style={{ color: "red" }}>{error}</p>}
 
           <section className="features-section">
             <div className="feature-card">
-              <h3>🌍 Multi-Chain Explorer</h3>
+              <h3>🌍 Chain Diversity</h3>
               <p>
-                See how many blockchains your wallet has interacted with. The more chains, the higher your score—unlock insights on your multi-chain dominance.
+                Explore how many blockchains you’ve transacted on. Greater chain
+                activity boosts your score.
               </p>
             </div>
             <div className="feature-card">
-              <h3>💼 Wallet Classification</h3>
+              <h3>🔍 Wallet Activity</h3>
               <p>
-                Are you a Whale, Trader, or Degen? Find out how your wallet is classified based on activity, net worth, and interactions across DeFi, NFTs, and tokens.
+                Analyze how active your wallet is across transactions, trades,
+                and different blockchains. More activity means a better score!
               </p>
             </div>
             <div className="feature-card">
-              <h3>📊 Wallet Health & Activity</h3>
+              <h3>🏦 DeFi Engagement</h3>
               <p>
-                Measure your wallet's performance—track transaction frequency, gas efficiency, and overall activity to discover how healthy and active your wallet really is.
+                Find out how much you’ve engaged in DeFi protocols. The more you
+                stake, swap, and participate, the higher your score.
               </p>
             </div>
           </section>

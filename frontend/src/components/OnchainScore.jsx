@@ -6,27 +6,25 @@ import { getChainStats } from "../services/getChainStats";
 import { getTokenApprovals } from "../services/getTokenApprovals";
 import { getDeFiPositions } from "../services/getDeFiPositions";
 import { getWalletNetWorth } from "../services/getWalletNetWorth";
-import { getProfitabilitySummary } from '../services/getProfitabilitySummary';
-import { getDomainData } from '../services/getDomainData';
-import { getTransactionHistoryAndFees } from '../services/getTransactionHistoryAndFees';
-import { getEthPriceInUsd } from '../services/getEthPriceInUsd';
-import CalendarHeatmap from 'react-calendar-heatmap';
-import { Tooltip } from 'react-tooltip';
+import { getProfitabilitySummary } from "../services/getProfitabilitySummary";
+import { getDomainData } from "../services/getDomainData";
+import { getTransactionHistoryAndFees } from "../services/getTransactionHistoryAndFees";
+import { getTokenPriceInUsd } from "../services/getTokenPriceInUsd";
+import CalendarHeatmap from "react-calendar-heatmap";
+import { Tooltip } from "react-tooltip";
 import "../OnchainScore.css"; // Import the new CSS file
-
-
 
 const OnchainScore = () => {
   const { walletAddress } = useParams();
   const [loading, setLoading] = useState(true);
   const [loadingText, setLoadingText] = useState("Fetching wallet data");
-  const [onchainScore, setOnchainScore] = useState(null);
+  const [onchainScore, setOnchainScore] = useState(0);
   const [chainData, setChainData] = useState(null); // Holds active chain data
   const [transactedChains, setTransactedChains] = useState([]); // Chains with transactions
   const [chainStats, setChainStats] = useState({}); // Holds stats for each chain
   const [totalTransactions, setTotalTransactions] = useState(0); // Total number of transactions
   const [favoriteChain, setFavoriteChain] = useState(""); // Chain with most transactions
-  const [favoriteNftChain, setFavoriteNftChain] = useState(""); // Chain with most NFTs
+  const [favoriteChainTxCount, setFavoriteChainTxCount] = useState(""); // Chain with most transactions
   const [firstTransactionDate, setFirstTransactionDate] = useState(null); // First transaction date
   const [firstTransactionChain, setFirstTransactionChain] = useState(""); // Chain with first transaction
   const [walletAge, setWalletAge] = useState(""); // Age of the wallet
@@ -41,47 +39,40 @@ const OnchainScore = () => {
   const [totalProfit, setTotalProfit] = useState(0);
   const [ensDomain, setEnsDomain] = useState(null); // Holds ENS domain
   const [unstoppableDomain, setUnstoppableDomain] = useState(null); // Holds Unstoppable domain
-  const [totalFees, setTotalFees] = useState(0); // Holds total gas fees
-const [totalFeesInUsd, setTotalFeesInUsd] = useState(0)
-  const [transactionHeatmapData, setTransactionHeatmapData] = useState([]);
-
-
+  const [totalFeesPerChain, setTotalFeesPerChain] = useState({}); // Holds total gas fees per chain
+  const [totalFeesInUsdPerChain, setTotalFeesInUsdPerChain] = useState({}); // Holds total gas fees in USD per chain
+  const [transactionHeatmapData, setTransactionHeatmapData] = useState([]); // Holds transaction timestamps
+  const [totalFeesInUsd, setTotalFeesInUsd] = useState(0);
+  const [highestFeesInUsd, setHighestFeesInUsd] = useState(0);
+  const [highestFeeChain, setHighestFeeChain] = useState("");
+  const [userType, setUserType] = useState("");
+  const [gaugeValue, setGaugeValue] = useState("");
 
   useEffect(() => {
     let loadingMessages = [
       "Fetching wallet data",
       "Analyzing transactions",
       "Gathering DeFi positions",
-      "Checking NFT holdings",
-      "Calculating onchain score",
+      "Fetching token prices",
+      "Calculating total transaction fees",
+      "Aggregating data across multiple chains",
+      "Checking for wallet domains (ENS, Unstoppable)",
+      "Processing transaction heatmap data",
+      "Building your transaction heatmap",
+      "Evaluating risk from token approvals",
+      "Calculating total gas fees in USD",
+      "Analyzing smart contract interactions",
+      "Calculating wallet's net worth",
+      "Finalizing onchain analysis",
     ];
 
     let count = 0;
     const intervalId = setInterval(() => {
       setLoadingText(loadingMessages[count % loadingMessages.length] + "...");
       count++;
-    }, 2000);
+    }, 1300);
 
     const fetchData = async () => {
-
-        try {
-            // Fetch transaction history and fees for Ethereum chain
-            const { totalTransactionFees, allTimestamps } = await getTransactionHistoryAndFees(walletAddress, 'eth');
-
-            const ethPriceInUsd = await getEthPriceInUsd();
-
-            const feesInUsd = totalTransactionFees * ethPriceInUsd;
-
-            setTotalFeesInUsd(feesInUsd.toFixed(2))
-    
-            // Set total fees and timestamps for heatmap
-            setTotalFees(totalTransactionFees);
-            setTransactionHeatmapData(allTimestamps);
-          } catch (error) {
-            console.error('Error fetching transaction history:', error);
-            setLoading(false); // Stop the loading on error
-          }
-
       try {
         // Fetch chain activity data
         const data = await getChainActivity(walletAddress);
@@ -93,16 +84,142 @@ const [totalFeesInUsd, setTotalFeesInUsd] = useState(0)
         );
         setTransactedChains(activeChains);
 
-        try {
-            // Fetch ENS and Unstoppable Domains
-            const { ensDomain, unstoppableDomain } = await getDomainData(walletAddress);
-            setEnsDomain(ensDomain);
-            setUnstoppableDomain(unstoppableDomain);
-          } catch (error) {
-            console.error('Error fetching domain data:', error);
-            setLoading(false); // Stop the loading on error
+        // Find the earliest transaction across all chains
+        let earliestTransaction = null;
+        let earliestTransactionChain = "";
+
+        activeChains.forEach((chain) => {
+          if (
+            chain.first_transaction &&
+            chain.first_transaction.block_timestamp
+          ) {
+            const firstTxDate = new Date(
+              chain.first_transaction.block_timestamp
+            );
+            if (!earliestTransaction || firstTxDate < earliestTransaction) {
+              earliestTransaction = firstTxDate;
+              earliestTransactionChain = chain.chain;
+            }
+          }
+        });
+
+        // Set the first transaction date and chain
+        if (earliestTransaction) {
+          setFirstTransactionDate(earliestTransaction.toDateString());
+          setFirstTransactionChain(earliestTransactionChain);
+
+          // Calculate wallet age
+          const now = new Date();
+          const diffTime = Math.abs(now - earliestTransaction);
+          const diffYears = (diffTime / (1000 * 60 * 60 * 24 * 365)).toFixed(2);
+          setWalletAge(diffYears);
+        }
+
+        // Fetch the current USD price of ETH, BNB, AVAX, and MATIC
+        const [ethPriceInUsd, bnbPriceInUsd, avaxPriceInUsd, maticPriceInUsd] =
+          await Promise.all([
+            getTokenPriceInUsd(
+              "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+              "eth"
+            ), // ETH price
+            getTokenPriceInUsd(
+              "0x418D75f65a02b3D53B2418FB8E1fe493759c7605",
+              "eth"
+            ), // BNB price
+            getTokenPriceInUsd(
+              "0x85f138bfEE4ef8e540890CFb48F620571d67Eda3",
+              "eth"
+            ), // AVAX price
+            getTokenPriceInUsd(
+              "0x7c9f4C87d911613Fe9ca58b579f737911AAD2D43",
+              "eth"
+            ), // MATIC price
+          ]);
+
+        // Initialize local variables
+        let totalFees = {};
+        let totalFeesInUsd = {};
+        let transactionCounts = {};
+        let totalTransactionsAcrossChains = 0;
+
+        // Fetch transaction history and fees for each chain
+        const chainPromises = activeChains.map(async (chain) => {
+          const { totalTransactionFees, allTimestamps } =
+            await getTransactionHistoryAndFees(walletAddress, chain.chain);
+
+          let chainPriceInUsd;
+          switch (chain.chain) {
+            case "avalanche":
+              chainPriceInUsd = avaxPriceInUsd;
+              break;
+            case "bsc":
+              chainPriceInUsd = bnbPriceInUsd;
+              break;
+            case "polygon":
+              chainPriceInUsd = maticPriceInUsd;
+              break;
+            default:
+              chainPriceInUsd = ethPriceInUsd; // For Ethereum and layer 2s
           }
 
+          const feesInUsd = totalTransactionFees * chainPriceInUsd;
+          totalFees[chain.chain] = isNaN(totalTransactionFees)
+            ? 0
+            : totalTransactionFees;
+          totalFeesInUsd[chain.chain] = isNaN(feesInUsd) ? 0 : feesInUsd;
+
+          const transactionCount = allTimestamps.length;
+          transactionCounts[chain.chain] = transactionCount;
+          totalTransactionsAcrossChains += transactionCount;
+
+          return { chain: chain.chain, timestamps: allTimestamps };
+        });
+
+        // Wait for all chains to finish fetching
+        const chainResults = await Promise.all(chainPromises);
+        const heatmapData = processHeatmapData(chainResults);
+
+        const mostActiveChain = Object.keys(transactionCounts).reduce(
+          (maxChain, currentChain) => {
+            return transactionCounts[currentChain] > transactionCounts[maxChain]
+              ? currentChain
+              : maxChain;
+          }
+        );
+
+        setFavoriteChain(mostActiveChain);
+        setFavoriteChainTxCount(transactionCounts[mostActiveChain]);
+        setTotalTransactions(totalTransactionsAcrossChains);
+
+        const totalGasFeesInUsd = Object.values(totalFeesInUsd).reduce(
+          (acc, fees) => acc + fees,
+          0
+        );
+        const highestFeeChain = Object.keys(totalFeesInUsd).reduce(
+          (highest, chain) => {
+            return totalFeesInUsd[chain] > totalFeesInUsd[highest]
+              ? chain
+              : highest;
+          },
+          Object.keys(totalFeesInUsd)[0]
+        );
+
+        const highestFeeAmount = totalFeesInUsd[highestFeeChain];
+        setTotalFeesInUsd(totalGasFeesInUsd);
+        setHighestFeeChain(highestFeeChain);
+        setHighestFeesInUsd(highestFeeAmount);
+        setTotalFeesPerChain(totalFees);
+        setTotalFeesInUsdPerChain(totalFeesInUsd);
+        setTransactionHeatmapData(heatmapData);
+
+        // Fetch ENS and Unstoppable Domains
+        const { ensDomain, unstoppableDomain } = await getDomainData(
+          walletAddress
+        );
+        setEnsDomain(ensDomain);
+        setUnstoppableDomain(unstoppableDomain);
+
+        // Fetch wallet net worth
         const netWorthApiChains = [
           "eth",
           "polygon",
@@ -112,82 +229,66 @@ const [totalFeesInUsd, setTotalFeesInUsd] = useState(0)
           "optimism",
           "base",
         ];
-
         const netWorthData = await getWalletNetWorth(
           walletAddress,
           netWorthApiChains
         );
-
-        // Set total net worth
         setNetWorth(netWorthData.total_networth_usd);
 
-        // Find the chain with the highest net worth
         let highestNetWorth = 0;
         let highestChainData = {};
-
         netWorthData.chains.forEach((chain) => {
           if (parseFloat(chain.networth_usd) > highestNetWorth) {
             highestNetWorth = parseFloat(chain.networth_usd);
-            highestChainData = {
-              chain: chain.chain,
-              amount: highestNetWorth,
-            };
+            highestChainData = { chain: chain.chain, amount: highestNetWorth };
           }
         });
-
         setHighestChain(highestChainData);
 
-        // For each active chain, fetch token approvals and calculate usd_at_risk per chain
+        // Calculate USD at risk per chain
         let totalUsdRisk = 0;
-        const usdRiskMap = {};
+        let usdRiskMap = {};
 
         const approvalsPromises = activeChains.map(async (chain) => {
-          const approvals = await getTokenApprovals(walletAddress, chain.chain);
+          try {
+            const approvals = await getTokenApprovals(
+              walletAddress,
+              chain.chain
+            );
+            let totalUsdRiskForChain = 0;
 
-          let totalUsdRiskForChain = 0;
-          approvals.forEach((approval) => {
-            if (approval.token && approval.token.usd_at_risk !== null) {
-              totalUsdRiskForChain += parseFloat(approval.token.usd_at_risk);
-            }
-          });
+            approvals.forEach((approval) => {
+              // Ensure usd_at_risk is a valid number and safely parse it
+              const usdAtRisk = approval?.token?.usd_at_risk
+                ? parseFloat(approval.token.usd_at_risk)
+                : 0;
 
-          usdRiskMap[chain.chain] = totalUsdRiskForChain;
-          totalUsdRisk += totalUsdRiskForChain;
+              if (!isNaN(usdAtRisk)) {
+                totalUsdRiskForChain += usdAtRisk; // Add to the total for this chain
+              }
+            });
+
+            usdRiskMap[chain.chain] = totalUsdRiskForChain;
+            totalUsdRisk += totalUsdRiskForChain; // Accumulate total risk across chains
+          } catch (error) {
+            console.error(
+              `Error fetching approvals for chain ${chain.chain}:`,
+              error
+            );
+            usdRiskMap[chain.chain] = 0; // Default to 0 risk if an error occurs
+          }
         });
 
+        // Wait for all promises to resolve
         await Promise.all(approvalsPromises);
-        setUsdAtRiskPerChain(usdRiskMap); // Set the usd_at_risk for each chain
-        setTotalUsdAtRisk(totalUsdRisk); // Set the total usd_at_risk
 
-        const chains_pnl_summary = ['eth', 'polygon']
-
-        try {
-            let totalTradeCount = 0;
-            let totalRealizedProfit = 0;
-    
-            // Fetch profitability data for each chain
-            const profitPromises = chains_pnl_summary.map(async (chain) => {
-              const profitData = await getProfitabilitySummary(walletAddress, chain);
-    
-              // Add to total trades and realized profit
-              totalTradeCount += profitData.total_count_of_trades;
-              totalRealizedProfit += parseFloat(profitData.total_realized_profit_usd);
-            });
-    
-            await Promise.all(profitPromises);
-    
-            // Set the states for total trades and profit
-            setTotalTrades(totalTradeCount);
-            setTotalProfit(totalRealizedProfit);
-          } catch (error) {
-            console.error('Error fetching profitability data:', error);
-            setLoading(false); // Stop the loading on error
-          }
+        // Update state with the calculated values
+        setUsdAtRiskPerChain(usdRiskMap);
+        setTotalUsdAtRisk(totalUsdRisk);
 
         const chains = ["eth"];
 
-        try {
-          let allPositions = [];
+        let allPositions = [];
           let protocolSet = new Set();
           let maxPosition = null;
           let maxUsdValue = 0;
@@ -225,91 +326,73 @@ const [totalFeesInUsd, setTotalFeesInUsd] = useState(0)
           setDefiProtocols(protocolSet);
           setHighestPosition(maxPosition);
           setHighestProtocolName(protocolOfMaxPosition); // Store protocol of the highest position
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          setLoading(false); // Stop the loading on error
-        }
 
-        // Calculate the onchain score based on the active chains
-        const score = calculateOnchainScore(activeChains);
-        setOnchainScore(score);
+        // Calculate onchain score within the fetchData function
+        const score = (() => {
+          let score = 0;
 
-        // Find the earliest transaction across all chains
-        let earliestTransaction = null;
-        let earliestTransactionChain = "";
+          // Transaction Activity (40%)
+          const baseTransactionScore = 25;
+          const transactionScore =
+            baseTransactionScore +
+            Math.min(15, (totalTransactionsAcrossChains / 250) * 15);
+          const chainsScore = Math.min(10, (activeChains.length / 3) * 10);
+          const tradesScore = Math.min(10, (totalTrades / 40) * 10);
+          score += transactionScore + chainsScore + tradesScore;
 
-        activeChains.forEach((chain) => {
-          if (
-            chain.first_transaction &&
-            chain.first_transaction.block_timestamp
-          ) {
-            const firstTxDate = new Date(
-              chain.first_transaction.block_timestamp
-            );
-            if (!earliestTransaction || firstTxDate < earliestTransaction) {
-              earliestTransaction = firstTxDate;
-              earliestTransactionChain = chain.chain;
-            }
+          // Wallet Age (5%)
+          const baseWalletAgeScore = 4;
+          const walletAgeScore =
+            baseWalletAgeScore + Math.min(1, (walletAge / 1.5) * 1);
+          score += walletAgeScore;
+
+          // DeFi Engagement (10%)
+          const baseDeFiEngagementScore = 6;
+          const defiEngagementScore =
+            baseDeFiEngagementScore + Math.min(4, (defiProtocols.size / 3) * 4);
+          score += defiEngagementScore;
+
+          // Net Worth (20%)
+          const netWorthScore = Math.min(
+            20,
+            (netWorthData.total_networth_usd / 20000) * 20
+          );
+          score += netWorthScore;
+
+          // Risk and Security (5%)
+          const maxUsdAtRisk = 50000;
+          const riskScore = Math.max(0, (1 - totalUsdRisk / maxUsdAtRisk) * 5);
+          score += riskScore;
+
+          // Gas Fees (10%)
+          const gasFeesToNetWorthRatio =
+            totalGasFeesInUsd / (netWorthData.total_networth_usd || 1);
+          const gasFeesScore = Math.min(
+            10,
+            (gasFeesToNetWorthRatio / 0.05) * 10
+          );
+          score += gasFeesScore;
+
+          // Profitability (5%)
+          const profitScore =
+            totalProfit >= 0 ? Math.min(5, (totalProfit / 2000) * 5) : 2;
+          score += profitScore;
+
+          // Domain Ownership (10%)
+          let domainScore = 0;
+          if (ensDomain && unstoppableDomain) {
+            domainScore = 10;
+          } else if (ensDomain || unstoppableDomain) {
+            domainScore = 5;
           }
-        });
+          score += domainScore;
 
-        // Set the first transaction date and chain
-        if (earliestTransaction) {
-          setFirstTransactionDate(earliestTransaction.toDateString());
-          setFirstTransactionChain(earliestTransactionChain);
-
-          // Calculate wallet age
-          const now = new Date();
-          const diffTime = Math.abs(now - earliestTransaction);
-          const diffYears = (diffTime / (1000 * 60 * 60 * 24 * 365)).toFixed(2);
-          setWalletAge(diffYears);
-        }
-
-        // Simulate fetching stats for each chain and calculate totals (as in the earlier version)
-        const statsPromises = activeChains.map(async (chain) => {
-          const stats = await getChainStats(walletAddress, chain.chain);
-          return { chain: chain.chain, stats };
-        });
-
-        const statsResults = await Promise.all(statsPromises);
-
-        // Combine the stats and store them in the state
-        const combinedStats = {};
-        let totalTx = 0;
-        let mostTxChain = "";
-        let mostNftChain = "";
-        let maxTxCount = 0;
-        let maxNftCount = 0;
-
-        statsResults.forEach((result) => {
-          const { chain, stats } = result;
-          combinedStats[chain] = stats;
-
-          // Sum the total transactions across all chains
-          const chainTxCount = parseInt(stats.transactions.total, 10);
-          totalTx += chainTxCount;
-
-          // Check if this chain has the most transactions
-          if (chainTxCount > maxTxCount) {
-            maxTxCount = chainTxCount;
-            mostTxChain = chain;
-          }
-
-          // Check if this chain has the most NFTs
-          const chainNftCount = parseInt(stats.nfts, 10);
-          if (chainNftCount > maxNftCount) {
-            maxNftCount = chainNftCount;
-            mostNftChain = chain;
-          }
-        });
-
-
-        setChainStats(combinedStats); // Store the stats for each chain
-        setTotalTransactions(totalTx); // Set the total number of transactions
-        setFavoriteChain(mostTxChain); // Set the chain with the most transactions
-        setFavoriteNftChain(mostNftChain); // Set the chain with the most NFTs
-
-        setLoading(false); // Stop the loading
+          // Normalize the score
+          return Math.min(100, Math.max(0, score));
+        })();
+        if (isNaN(score)) score = 0;
+        setOnchainScore(score.toFixed(2));
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
         setLoading(false); // Stop the loading on error
@@ -322,48 +405,50 @@ const [totalFeesInUsd, setTotalFeesInUsd] = useState(0)
     return () => clearInterval(intervalId);
   }, [walletAddress]);
 
-  // Function to calculate onchain score based on fetched chain data
-  const calculateOnchainScore = (activeChains) => {
-    return Math.floor((activeChains.length / 8) * 100); // Example logic
-  };
-
-   // Function to process transaction timestamps into daily counts for the heatmap
-   const processHeatmapData = () => {
+  // Function to process transaction timestamps into daily counts per chain for the heatmap
+  const processHeatmapData = (chainResults) => {
     const dayCounts = {};
 
-    // Initialize day counts for the past year
+    // Initialize day counts for the past year for each chain
     const today = new Date();
     for (let i = 0; i < 365; i++) {
-      const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
-      dayCounts[day.toISOString().split('T')[0]] = 0; // YYYY-MM-DD format
+      const day = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() - i
+      );
+      dayCounts[day.toISOString().split("T")[0]] = {};
     }
 
-    // Increment counts based on transaction timestamps
-    transactionHeatmapData.forEach((timestamp) => {
-      const date = new Date(timestamp).toISOString().split('T')[0];
-      if (dayCounts[date] !== undefined) {
-        dayCounts[date]++;
-      }
+    // Increment counts based on transaction timestamps for each chain
+    chainResults.forEach(({ chain, timestamps }) => {
+      timestamps.forEach((timestamp) => {
+        const date = new Date(timestamp).toISOString().split("T")[0];
+        if (dayCounts[date] !== undefined) {
+          if (!dayCounts[date][chain]) {
+            dayCounts[date][chain] = 0;
+          }
+          dayCounts[date][chain]++;
+        }
+      });
     });
 
     // Convert to array format for react-calendar-heatmap
-    return Object.keys(dayCounts).map(date => ({
+    return Object.keys(dayCounts).map((date) => ({
       date,
-      count: dayCounts[date],
+      chains: dayCounts[date],
     }));
   };
 
-  const heatmapData = processHeatmapData(); // Prepare data for heatmap
-
+  // Format the tooltip to show transactions per chain for each date
   const getTooltipData = (value) => {
-    return value.count ? `${value.date}: ${value.count} transaction(s)` : `${value.date}: No transactions`;
-  };
+    if (!value || !value.chains) return `${value.date}: No transactions`;
 
-  // Function to format the USD at risk per chain for display
-  const formatUsdAtRiskPerChain = () => {
-    return Object.keys(usdAtRiskPerChain)
-      .map((chain) => `${chain} ($${usdAtRiskPerChain[chain].toFixed(2)})`)
+    const chainDetails = Object.entries(value.chains)
+      .map(([chain, count]) => `${chain}: ${count} tx(s)`)
       .join(", ");
+
+    return `${value.date}: ${chainDetails}`;
   };
 
   const formatNetWorthSummary = () => {
@@ -375,30 +460,50 @@ const [totalFeesInUsd, setTotalFeesInUsd] = useState(0)
   };
 
   const formatProfitabilitySummary = () => {
-    if (totalTrades === 0) return '';
+    if (totalTrades === 0) return "";
 
-    return `📈 You have made a total of ${totalTrades} trades across Ethereum and Polygon with your net profit of $${totalProfit.toFixed(2)}.`;
+    return `📈 You have made a total of ${totalTrades} trades across Ethereum and Polygon with your net profit of $${totalProfit.toFixed(
+      2
+    )}.`;
   };
 
- // Format the protocols and position data for display
-const formatDeFiSummary = () => {
+  // Format the protocols and position data for display
+  const formatDeFiProtocolInteractionsSummary = () => {
     if (!highestPosition || defiProtocols.size === 0) return "";
-  
+
     const protocolsArray = Array.from(defiProtocols);
     const protocolsString = protocolsArray.join(", ");
     const highestUsdValue = highestPosition.balance_usd.toFixed(2);
     const highestPositionLabel = highestPosition.label;
     const highestTokenName = highestPosition.tokens[0]?.name || "";
     const protocol = highestProtocolName; // Protocol of the highest position
-  
-    return `💳 Interacted with ${defiProtocols.size} unique DeFi protocols (${protocolsString}) with your highest being $${highestUsdValue} in ${highestTokenName} on ${protocol} as a ${highestPositionLabel} position.`;
+
+    return `💳 Interacted with ${defiProtocols.size} unique DeFi protocols (${protocolsString})`;
   };
+
+    // Format the protocols and position data for display
+    const formatDeFiPositionTypeSummary = () => {
+        if (!highestPosition || defiProtocols.size === 0) return "";
+    
+        const protocolsArray = Array.from(defiProtocols);
+        const protocolsString = protocolsArray.join(", ");
+        const highestUsdValue = highestPosition.balance_usd.toFixed(2);
+        const highestPositionLabel = highestPosition.label;
+        const highestTokenName = highestPosition.tokens[0]?.name || "";
+        const protocol = highestProtocolName; // Protocol of the highest position
+    
+        return `🤑 Your highest DeFi position is a ${highestPositionLabel} position with ${highestTokenName} on ${protocol} amounting to $${highestUsdValue}`;
+      };
+
+
   return (
     <div className="onchain-container">
       <section className="onchain-hero-section">
         <div className="onchain-hero-content">
           <img src={makeBlockie(walletAddress)} alt="Wallet Avatar" />
-          <h1>{walletAddress}</h1>
+          {!ensDomain && !unstoppableDomain && <h1>{walletAddress}</h1>}
+          {ensDomain && <h1>{ensDomain}</h1>}
+          {!ensDomain && unstoppableDomain && <h1>{unstoppableDomain}</h1>}
           {loading ? (
             <div>
               <div className="onchain-loader"></div>
@@ -406,53 +511,63 @@ const formatDeFiSummary = () => {
             </div>
           ) : (
             <div>
-              <h2 className="onchain-score">
-                Your Onchain Score is: {onchainScore}
+              <h2 className="onchain-score">Your Onchain Score is:</h2>
+              <h2 style={{ fontSize: "3rem", color: "blue" }}>
+                {onchainScore} / 100
               </h2>
               <div className="onchain-info">
-                <h3>ETH Mainnet Transaction Heatmap (1y)</h3>
+                <h3>Multichain Transaction Heatmap</h3>
                 <CalendarHeatmap
-                  startDate={new Date(new Date().setDate(new Date().getDate() - 365))} // Last year
+                  startDate={
+                    new Date(new Date().setDate(new Date().getDate() - 365))
+                  } // Last year
                   endDate={new Date()} // Today
-                  values={heatmapData}
+                  values={transactionHeatmapData}
                   classForValue={(value) => {
-                    if (!value || value.count === 0) {
-                      return 'color-empty'; // No transactions
+                    if (
+                      !value ||
+                      !value.chains ||
+                      Object.keys(value.chains).length === 0
+                    ) {
+                      return "color-empty"; // No transactions
                     }
-                    // Define classes for intensity (based on transaction count)
-                    return `color-scale-${Math.min(value.count, 4)}`;
+                    // Define classes for intensity based on total transaction count
+                    const totalCount = Object.values(value.chains).reduce(
+                      (acc, count) => acc + count,
+                      0
+                    );
+                    return `color-scale-${Math.min(totalCount, 4)}`;
                   }}
-                  tooltipDataAttrs={value => ({
-                    'data-tooltip-id': 'heatmap-tooltip',
-                    'data-tooltip-content': getTooltipData(value),
+                  tooltipDataAttrs={(value) => ({
+                    "data-tooltip-id": "heatmap-tooltip",
+                    "data-tooltip-content": getTooltipData(value),
                   })}
                   showWeekdayLabels={true}
                 />
                 <Tooltip id="heatmap-tooltip" />
               </div>
               <div className="onchain-info">
-              <h3>Wallet Summary</h3>
+                <h3>Wallet Summary</h3>
                 <ul>
-                {ensDomain && (
+                  {ensDomain && (
                     <>
-                      <li>
-                        📌 The wallet owns an ENS Domain ({ensDomain})
-                      </li>
+                      <li>📌 The wallet owns an ENS Domain ({ensDomain})</li>
                     </>
                   )}
-                      {unstoppableDomain && (
+                  {unstoppableDomain && (
                     <>
                       <li>
-                      📌 The wallet owns an Unstoppable Domain ({unstoppableDomain})
+                        🛑 The wallet owns an Unstoppable Domain (
+                        {unstoppableDomain})
                       </li>
                     </>
                   )}
                   <li>
-                    💡 The wallet has transacted on {transactedChains.length}{" "}
+                    💡 The wallet has performed transactions on {transactedChains.length}{" "}
                     chain(s).
                   </li>
                   <li>
-                    🌐 Transacted on:{" "}
+                    🌐 Transacted Chains:{" "}
                     {transactedChains.map((chain) => chain.chain).join(", ")}
                   </li>
                   {totalTransactions > 0 && (
@@ -460,16 +575,8 @@ const formatDeFiSummary = () => {
                       <li>
                         ❄️ You have performed {totalTransactions} transactions
                         totally across all chains, with your highest on{" "}
-                        {favoriteChain} with{" "}
-                        {chainStats[favoriteChain]?.transactions.total}{" "}
+                        {favoriteChain} with {favoriteChainTxCount}{" "}
                         transactions.
-                      </li>
-                      <li>
-                        ⚡️ Your favorite chain for trading NFTs seems to be{" "}
-                        {favoriteNftChain}, owning{" "}
-                        {chainStats[favoriteNftChain]?.nfts} NFTs and{" "}
-                        {chainStats[favoriteNftChain]?.nft_transfers.total} NFT
-                        Transfers
                       </li>
                     </>
                   )}
@@ -485,20 +592,38 @@ const formatDeFiSummary = () => {
                   <ul>
                     <li>
                       {" "}
-                      💡 The total USD at risk from token approvals is: $
-                      {totalUsdAtRisk.toFixed(2)} on the following chains -{" "}
-                      {formatUsdAtRiskPerChain()}.
+                      💡 The total USD at risk from open token approvals is: $
+                      {totalUsdAtRisk.toFixed(2)}
                     </li>
-                    <li>{formatDeFiSummary()}</li>
-                    <li>{formatNetWorthSummary()}</li>
-                    <li>{formatProfitabilitySummary()}</li>
-                    <li>💵 Total gas fees paid till date (ETH Mainnet): {totalFees.toFixed(6)} ETH (USD {totalFeesInUsd})</li>
+                    {highestPosition && <li>{formatDeFiProtocolInteractionsSummary()}</li>}
+                    {highestPosition && <li>{formatDeFiPositionTypeSummary()}</li>}
+                    {netWorth > 0 && <li>{formatNetWorthSummary()}</li>}
+                    {totalTrades > 0 && <li>{formatProfitabilitySummary()}</li>}
+                    {
+                      <li>
+                        ⛽️ Total gas fees paid across all chains amounts to $
+                        {totalFeesInUsd.toFixed(2)}, with the highest paid on{" "}
+                        {highestFeeChain.toUpperCase()} amounting to $
+                        {highestFeesInUsd.toFixed(2)}
+                      </li>
+                    }
                   </ul>
                 </ul>
               </div>
             </div>
           )}
         </div>
+        <a
+            href="https://developers.moralis.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://moralis-portfolio-staging-f5f5e6cfeae8.herokuapp.com/images/Powered-by-Moralis-Badge-Text-Grey.svg"
+              alt="Powered by Moralis"
+              className="moralis-logo"
+            />
+          </a>
       </section>
     </div>
   );

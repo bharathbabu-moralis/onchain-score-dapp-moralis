@@ -61,7 +61,7 @@
   
   /* Score Display */
   .onchain-score {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: bold;
     color: black;
     margin-top: 30px;
@@ -80,6 +80,8 @@
     list-style: none; /* Remove default bullets */
     padding-left: 0;
     margin-top: 10px;
+    justify-content: center;
+    align-items: center;
   }
   
   .onchain-info li {
@@ -87,7 +89,7 @@
     margin: 10px 0; /* Add spacing between bullet points */
     display: flex;
     align-items: center;
-    justify-content: center; /* Center-align the bullet points */
+    justify-content: left; /* Center-align the bullet points */
   }
   
   .onchain-info p {
@@ -132,5 +134,33 @@
   }
   .color-scale-4 {
     fill: #1e6823;
+  }
+  
+  .gauge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .gauge-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .gauge-labels {
+    position: absolute;
+    top: 60%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .gauge-label {
+    position: absolute;
+    font-size: 14px;
+    font-weight: bold;
+    color: #000000;
+    text-align: center;
   }
   
