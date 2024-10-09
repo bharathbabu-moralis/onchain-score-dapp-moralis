@@ -112,7 +112,7 @@ const Home = () => {
           </form>
 
           {/* Display an error if the input is invalid */}
-          {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && <p style={{ color: "red"}}>{error}</p>}
 
           <section className="features-section">
             <div className="feature-card">

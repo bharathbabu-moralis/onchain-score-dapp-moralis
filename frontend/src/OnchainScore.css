@@ -1,0 +1,136 @@
+/* OnchainScore Container */
+.onchain-container {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #f0f4f8; /* Lighter background */
+    color: #2c3e50;
+    min-height: 100vh;
+  }
+  
+  /* OnchainScore Hero Section */
+  .onchain-hero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #ffffff;
+    color: #2c3e50;
+    padding: 40px 20px;
+    text-align: center;
+    border-radius: 12px;
+    margin-bottom: 50px;
+    margin-top: 60px;
+    width: 80%;
+    max-width: 1200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  }
+  
+  .onchain-hero-content h1 {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: black;
+    margin-bottom: 20px;
+  }
+  
+  /* Loader styles */
+  .onchain-loader {
+    border: 12px solid #f3f3f3;
+    border-top: 12px solid #3498db;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+    margin-bottom: 20px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Loading text */
+  .onchain-loading-text {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-top: 20px;
+  }
+  
+  /* Score Display */
+  .onchain-score {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: black;
+    margin-top: 30px;
+  }
+  
+  /* Active Chain Info */
+  .onchain-info {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-top: 20px;
+    text-align: center; /* Center the text */
+  }
+  
+  .onchain-info ul {
+    list-style: none; /* Remove default bullets */
+    padding-left: 0;
+    margin-top: 10px;
+  }
+  
+  .onchain-info li {
+    font-size: 1.2rem;
+    margin: 10px 0; /* Add spacing between bullet points */
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center-align the bullet points */
+  }
+  
+  .onchain-info p {
+    font-size: 1.2rem;
+    color: #e74c3c; /* Red color for error message */
+    font-weight: 500;
+    text-align: center;
+  }
+
+  /* Smaller font size for month and weekday labels */
+.react-calendar-heatmap text {
+    font-size: 10px; /* Adjust this value as needed */
+    fill: #555; /* Darker text color for better readability */
+  }
+  
+  /* Additional padding to avoid label overlap */
+  .react-calendar-heatmap .react-calendar-heatmap-weekday-labels {
+    padding-bottom: 5px; /* Add some space under weekdays */
+  }
+  
+  .react-calendar-heatmap .react-calendar-heatmap-month-labels {
+    padding-right: 5px; /* Add some space beside months */
+  }
+  
+  /* For further fine-tuning, adjust these if needed */
+  .react-calendar-heatmap .react-calendar-heatmap-day {
+    margin: 1px; /* Adjust margin for days if necessary */
+  }
+  
+  
+  .color-empty {
+    fill: #e0e0e0; /* Light gray for no transactions */
+  }
+  .color-scale-1 {
+    fill: #d6e685;
+  }
+  .color-scale-2 {
+    fill: #8cc665;
+  }
+  .color-scale-3 {
+    fill: #44a340;
+  }
+  .color-scale-4 {
+    fill: #1e6823;
+  }
+  

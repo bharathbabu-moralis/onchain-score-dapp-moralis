@@ -46,7 +46,7 @@
   align-items: center;
   gap: 15px;
   width: 100%;
-  margin-bottom: 50px; /* Add spacing below the form */
+  margin-bottom: 25px; /* Add spacing below the form */
 }
 
 .input-box {
