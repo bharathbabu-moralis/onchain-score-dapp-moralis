@@ -9,8 +9,13 @@ import { getProfitabilitySummary } from "../services/getProfitabilitySummary";
 import { getDomainData } from "../services/getDomainData";
 import { getTransactionHistoryAndFees } from "../services/getTransactionHistoryAndFees";
 import { getTokenPriceInUsd } from "../services/getTokenPriceInUsd";
+import { getTrendingTokens } from "../services/getTrendingTokens";
+import { getBlueChipTokens } from "../services/getBlueChipTokens";
+import { getRiskyBetsTokens } from "../services/getRiskyBetsTokens";
+import { getSolidPerformersTokens } from "../services/getSolidPerformersTokens";
 import CalendarHeatmap from "react-calendar-heatmap";
 import { Tooltip } from "react-tooltip";
+import TokenCard from './TokenCard'; 
 import "../OnchainScore.css"; // Import the new CSS file
 
 const OnchainScore = () => {
@@ -46,6 +51,33 @@ const OnchainScore = () => {
   const [highestFeeChain, setHighestFeeChain] = useState("");
   const [userType, setUserType] = useState("");
   const [gaugeValue, setGaugeValue] = useState("");
+  const [recommendedTokens, setRecommendedTokens] = useState([])
+  const sampleTokens = [
+    {
+      token_address: "0x64d0f55cd8c7133a9d7102b13987235f486f2224",
+      token_logo: "https://d23exngyjlavgo.cloudfront.net/0x1_0x64d0f55cd8c7133a9d7102b13987235f486f2224",
+      token_name: "SwissBorg Token",
+      token_symbol: "BORG",
+      price_usd: 0.1607,
+      price_percent_change_usd: { "1d": -1.88 },
+    },
+    {
+      token_address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      token_logo: "https://d23exngyjlavgo.cloudfront.net/0x1_0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      token_name: "Wrapped Ether",
+      token_symbol: "WETH",
+      price_usd: 2441.12,
+      price_percent_change_usd: { "1d": 2.34 },
+    },
+    {
+      token_address: "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+      token_logo: "https://d23exngyjlavgo.cloudfront.net/0x1_0x514910771af9ca656af840dff83e8264ecf986ca",
+      token_name: "ChainLink Token",
+      token_symbol: "LINK",
+      price_usd: 18.45,
+      price_percent_change_usd: { "1d": 0.45 },
+    },
+  ];
 
   useEffect(() => {
     let loadingMessages = [
@@ -215,6 +247,8 @@ const OnchainScore = () => {
         const { ensDomain, unstoppableDomain } = await getDomainData(
           walletAddress
         );
+        console.log("Domain data API Response ens: ", ensDomain)
+        console.log("Domain data API Response ud: ", unstoppableDomain)
         setEnsDomain(ensDomain);
         setUnstoppableDomain(unstoppableDomain);
 
@@ -350,6 +384,51 @@ const OnchainScore = () => {
         setDefiProtocols(protocolSet);
         setHighestPosition(maxPosition);
         setHighestProtocolName(protocolOfMaxPosition);
+
+        let recommendedTokens = [];
+
+        const tokenRecommendationChains = [
+          "eth",
+          "polygon",
+          "bsc",
+          "optimism",
+          "base",
+        ];
+
+  // Helper to pick a random chain excluding the most active one
+  const pickRandomChain = (excludeChain) => {
+    const filteredChains = tokenRecommendationChains.filter(chain => chain !== excludeChain);
+    const randomIndex = Math.floor(Math.random() * filteredChains.length);
+    return filteredChains[randomIndex];
+  };
+
+
+    // Pick a random chain (excluding the most active chain) for trending tokens
+  const randomChain = pickRandomChain(mostActiveChain);
+
+  // 1. Fetch trending tokens from a random chain
+  let trendingTokens = await getTrendingTokens(randomChain, 50000000, 80);
+
+  // 2. Fetch regular tokens (blue-chip, risky, or solid performers) from the most active chain
+  let secondaryTokens = [];
+  if (totalTrades > 100) {
+    // Degen: Fetch risky bets
+    secondaryTokens = await getRiskyBetsTokens(mostActiveChain, 10000000, 25, 500, 10000, 70, 1);
+  } else if (totalTrades > 50) {
+    // Trader: Fetch blue-chip tokens
+    secondaryTokens = await getBlueChipTokens(mostActiveChain, 250000000, 2, 2, 10000, 70, 1);
+  } else {
+    // Newbie: Fetch solid performers
+    secondaryTokens = await getSolidPerformersTokens(mostActiveChain, 100000, 10000, 1, 10000, 80, 1);
+  }
+
+  recommendedTokens.push(...trendingTokens.slice(0, 3)); // 3 tokens from trending (random chain)
+  recommendedTokens.push(...secondaryTokens.slice(0, 2)); // 2 tokens from secondary recommendation (most active chain)
+
+  // 4. Set the recommended tokens in state
+  setRecommendedTokens(recommendedTokens.slice(0, 5));
+
+  console.log(recommendedTokens)
 
         const score = (() => {
           let score = 0;
@@ -567,6 +646,14 @@ const OnchainScore = () => {
                   showWeekdayLabels={true}
                 />
                 <Tooltip id="heatmap-tooltip" />
+              </div>
+              <div className="onchain-info">
+                <h3>Top Token Recommendations Based on your Onchain Activity</h3>
+      <div className="token-cards-wrapper">
+        {recommendedTokens.map((token) => (
+          <TokenCard key={token.token_address} token={token} />
+        ))}
+      </div>
               </div>
               <div className="onchain-info">
                 <h3>Wallet Summary</h3>

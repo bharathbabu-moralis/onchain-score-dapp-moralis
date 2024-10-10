@@ -1,0 +1,84 @@
+/* General card styling */
+.token-card {
+  display: inline-block;
+  background-color: #f9f9f9;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  width: 160px;
+  padding: 15px;
+  margin: 15px;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 170px; /* Set a fixed height to ensure uniformity */
+}
+
+.token-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Token card content layout */
+.token-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between; /* Ensure equal spacing between content */
+  height: 100%;
+}
+
+/* Token logo styling */
+.token-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-bottom: 12px;
+}
+
+/* Token details layout */
+.token-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #333;
+  text-align: center; /* Ensure text is centered */
+}
+
+/* Token name styling */
+.token-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 4px;
+  max-height: 40px; /* Limit the space for long token names */
+  overflow: hidden; /* Hide overflow if token name is too long */
+  text-overflow: ellipsis;
+}
+
+/* Token symbol styling */
+.token-symbol {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+/* Token price styling */
+.token-price {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+/* View token link */
+.view-token-link {
+  font-size: 0.85rem;
+  color: #1e90ff;
+  text-decoration: none;
+  margin-top: 10px;
+}
+
+.view-token-link:hover {
+  text-decoration: underline;
+}
