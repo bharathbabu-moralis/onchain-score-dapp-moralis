@@ -16,6 +16,17 @@ const TokenCard = ({ token }) => {
   // Get the chain name from the chain_id
   const chainName = chainIdToNameMap[token.chain_id] || 'ethereum'; // Default to 'ethereum' if not found
 
+  // Track token clicks
+  const handleTokenClick = () => {
+    if (window.gtag) {
+      window.gtag('event', 'token_click', {
+        event_category: 'Token',
+        event_label: token.token_name, // Token name will be displayed in the event label
+        value: token.token_address,   // Token address to track specific token
+      });
+    }
+  };
+
   return (
     <div className="token-card">
       <div className="token-card-content">
@@ -30,6 +41,7 @@ const TokenCard = ({ token }) => {
             target="_blank"
             rel="noopener noreferrer"
             className="view-token-link"
+            onClick={handleTokenClick} // Call the tracking function on click
           >
             View Token
           </a>
