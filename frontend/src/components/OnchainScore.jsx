@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import makeBlockie from "ethereum-blockies-base64";
 import { getChainActivity } from "../services/getChainActivity";
-import { getChainStats } from "../services/getChainStats";
 import { getTokenApprovals } from "../services/getTokenApprovals";
 import { getDeFiPositions } from "../services/getDeFiPositions";
 import { getWalletNetWorth } from "../services/getWalletNetWorth";

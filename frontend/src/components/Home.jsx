@@ -37,43 +37,51 @@ const Home = () => {
     }
   };
 
-  const resolveENS = async (domain) => {
+const resolveENS = async (domain) => {
     try {
-      const response = await fetch(
-        `https://deep-index.moralis.io/api/v2.2/resolve/ens/${domain}`,
-        {
-          headers: {
-            accept: "application/json",
-            "X-API-Key": process.env.REACT_APP_MORALIS_API_KEY, // Add your Moralis API key here
-          },
-        }
-      );
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_BASE_URL}/api/resolve-ens`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ domain }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to resolve ENS domain');
+      }
+  
       const data = await response.json();
       return data.address || null;
     } catch (error) {
-      console.error("Error resolving ENS:", error);
+      console.error('Error resolving ENS domain:', error);
       return null;
     }
   };
+  
 
-  const resolveUnstoppable = async (domain) => {
+const resolveUnstoppable = async (domain) => {
     try {
-      const response = await fetch(
-        `https://deep-index.moralis.io/api/v2.2/resolve/${domain}?currency=eth`,
-        {
-          headers: {
-            accept: "application/json",
-            "X-API-Key": process.env.REACT_APP_MORALIS_API_KEY, // Add your Moralis API key here
-          },
-        }
-      );
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_BASE_URL}/api/resolve-unstoppable`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ domain }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to resolve Unstoppable domain');
+      }
+  
       const data = await response.json();
       return data.address || null;
     } catch (error) {
-      console.error("Error resolving Unstoppable domain:", error);
+      console.error('Error resolving Unstoppable domain:', error);
       return null;
     }
   };
+  
 
   // Use ethers.js to validate Ethereum addresses
   const isValidAddress = (address) => {

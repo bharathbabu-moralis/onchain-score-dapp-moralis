@@ -1,14 +1,11 @@
 export const getTokenApprovals = async (walletAddress, chain) => {
-    const apiKey = process.env.REACT_APP_MORALIS_API_KEY;
-    const url = `https://deep-index.moralis.io/api/v2.2/wallets/${walletAddress}/approvals?chain=${chain}`;
-  
     try {
-      const response = await fetch(url, {
-        method: 'GET',
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_BASE_URL}/api/get-token-approvals`, {
+        method: 'POST',
         headers: {
-          'accept': 'application/json',
-          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ walletAddress, chain }),
       });
   
       if (!response.ok) {
@@ -16,7 +13,7 @@ export const getTokenApprovals = async (walletAddress, chain) => {
       }
   
       const data = await response.json();
-      return data.result; // Returns the array of approval results
+      return data; // Returns the array of approval results
     } catch (error) {
       console.error(`Error fetching token approvals for ${chain}:`, error);
       throw error;

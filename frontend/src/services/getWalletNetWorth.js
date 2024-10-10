@@ -1,15 +1,11 @@
 export const getWalletNetWorth = async (walletAddress, chains) => {
-    const apiKey = process.env.REACT_APP_MORALIS_API_KEY;
-    const chainQuery = chains.map(chain => `chains%5B%5D=${chain}`).join('&'); // Format the chain array for query params
-    const url = `https://deep-index.moralis.io/api/v2.2/wallets/${walletAddress}/net-worth?${chainQuery}&exclude_spam=true&exclude_unverified_contracts=true`;
-  
     try {
-      const response = await fetch(url, {
-        method: 'GET',
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_BASE_URL}/api/get-wallet-net-worth`, {
+        method: 'POST',
         headers: {
-          'accept': 'application/json',
-          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ walletAddress, chains }),
       });
   
       if (!response.ok) {

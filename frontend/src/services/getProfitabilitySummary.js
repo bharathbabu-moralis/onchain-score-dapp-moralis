@@ -1,14 +1,11 @@
 export const getProfitabilitySummary = async (walletAddress, chain) => {
-    const apiKey = process.env.REACT_APP_MORALIS_API_KEY;
-    const url = `https://deep-index.moralis.io/api/v2.2/wallets/${walletAddress}/profitability/summary?chain=${chain}`;
-  
     try {
-      const response = await fetch(url, {
-        method: 'GET',
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_BASE_URL}/api/get-profitability-summary`, {
+        method: 'POST',
         headers: {
-          'accept': 'application/json',
-          'X-API-Key': apiKey,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ walletAddress, chain }),
       });
   
       if (!response.ok) {
@@ -16,7 +13,7 @@ export const getProfitabilitySummary = async (walletAddress, chain) => {
       }
   
       const data = await response.json();
-      return data; // Returns the profitability summary
+      return data;
     } catch (error) {
       console.error(`Error fetching profitability summary for ${walletAddress}:`, error);
       throw error;
