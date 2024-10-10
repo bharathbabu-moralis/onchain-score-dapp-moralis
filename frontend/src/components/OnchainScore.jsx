@@ -288,45 +288,69 @@ const OnchainScore = () => {
         const chains = ["eth"];
 
         let allPositions = [];
-          let protocolSet = new Set();
-          let maxPosition = null;
-          let maxUsdValue = 0;
-          let protocolOfMaxPosition = "";
+        let protocolSet = new Set();
+        let maxPosition = null;
+        let maxUsdValue = 0;
+        let protocolOfMaxPosition = "";
 
-          // Fetch DeFi positions for each chain
-          const defiPromises = chains.map(async (chain) => {
-            const defiData = await getDeFiPositions(walletAddress, chain);
+        // Fetch DeFi positions for each chain
+        const defiPromises = chains.map(async (chain) => {
+          const defiData = await getDeFiPositions(walletAddress, chain);
 
-            defiData.forEach((protocolData) => {
-              // Add protocol name to the set (ensure uniqueness)
-              if (protocolData.protocol_name) {
-                protocolSet.add(protocolData.protocol_name);
-              }
+          defiData.forEach((protocolData) => {
+            // Add protocol name to the set (ensure uniqueness)
+            if (protocolData.protocol_name) {
+              protocolSet.add(protocolData.protocol_name);
+            }
 
-              // Store positions and check for highest position
-              if (
-                protocolData.position &&
-                protocolData.position.balance_usd > maxUsdValue
-              ) {
-                maxUsdValue = protocolData.position.balance_usd;
-                maxPosition = protocolData.position;
-                protocolOfMaxPosition = protocolData.protocol_name; // Store the protocol of the highest position
-              }
+            // Store positions and check for highest position
+            if (
+              protocolData.position &&
+              protocolData.position.balance_usd > maxUsdValue
+            ) {
+              maxUsdValue = protocolData.position.balance_usd;
+              maxPosition = protocolData.position;
+              protocolOfMaxPosition = protocolData.protocol_name; // Store the protocol of the highest position
+            }
 
-              if (protocolData.position) {
-                allPositions.push(protocolData.position);
-              }
-            });
+            if (protocolData.position) {
+              allPositions.push(protocolData.position);
+            }
           });
+        });
 
-          await Promise.all(defiPromises);
+        const chains_pnl_summary = ["eth", "polygon"];
 
-          // Update the states
-          setDefiProtocols(protocolSet);
-          setHighestPosition(maxPosition);
-          setHighestProtocolName(protocolOfMaxPosition); // Store protocol of the highest position
+        let totalTradeCount = 0;
+        let totalRealizedProfit = 0;
 
-        // Calculate onchain score within the fetchData function
+        // Fetch profitability data for each chain
+        const profitPromises = chains_pnl_summary.map(async (chain) => {
+          const profitData = await getProfitabilitySummary(
+            walletAddress,
+            chain
+          );
+
+          // Add to total trades and realized profit
+          totalTradeCount += profitData.total_count_of_trades;
+          totalRealizedProfit += parseFloat(
+            profitData.total_realized_profit_usd
+          );
+        });
+
+        await Promise.all(profitPromises);
+
+        // Set the states for total trades and profit
+        setTotalTrades(totalTradeCount);
+        setTotalProfit(totalRealizedProfit);
+
+        await Promise.all(defiPromises);
+
+        // Update the states
+        setDefiProtocols(protocolSet);
+        setHighestPosition(maxPosition);
+        setHighestProtocolName(protocolOfMaxPosition);
+
         const score = (() => {
           let score = 0;
 
@@ -480,20 +504,19 @@ const OnchainScore = () => {
     return `💳 Interacted with ${defiProtocols.size} unique DeFi protocols (${protocolsString})`;
   };
 
-    // Format the protocols and position data for display
-    const formatDeFiPositionTypeSummary = () => {
-        if (!highestPosition || defiProtocols.size === 0) return "";
-    
-        const protocolsArray = Array.from(defiProtocols);
-        const protocolsString = protocolsArray.join(", ");
-        const highestUsdValue = highestPosition.balance_usd.toFixed(2);
-        const highestPositionLabel = highestPosition.label;
-        const highestTokenName = highestPosition.tokens[0]?.name || "";
-        const protocol = highestProtocolName; // Protocol of the highest position
-    
-        return `🤑 Your highest DeFi position is a ${highestPositionLabel} position with ${highestTokenName} on ${protocol} amounting to $${highestUsdValue}`;
-      };
+  // Format the protocols and position data for display
+  const formatDeFiPositionTypeSummary = () => {
+    if (!highestPosition || defiProtocols.size === 0) return "";
 
+    const protocolsArray = Array.from(defiProtocols);
+    const protocolsString = protocolsArray.join(", ");
+    const highestUsdValue = highestPosition.balance_usd.toFixed(2);
+    const highestPositionLabel = highestPosition.label;
+    const highestTokenName = highestPosition.tokens[0]?.name || "";
+    const protocol = highestProtocolName; // Protocol of the highest position
+
+    return `🤑 Your highest DeFi position is a ${highestPositionLabel} position with ${highestTokenName} on ${protocol} amounting to $${highestUsdValue}`;
+  };
 
   return (
     <div className="onchain-container">
@@ -519,8 +542,8 @@ const OnchainScore = () => {
                 <CalendarHeatmap
                   startDate={
                     new Date(new Date().setDate(new Date().getDate() - 365))
-                  } // Last year
-                  endDate={new Date()} // Today
+                  }
+                  endDate={new Date()}
                   values={transactionHeatmapData}
                   classForValue={(value) => {
                     if (
@@ -528,7 +551,7 @@ const OnchainScore = () => {
                       !value.chains ||
                       Object.keys(value.chains).length === 0
                     ) {
-                      return "color-empty"; // No transactions
+                      return "color-empty";
                     }
                     // Define classes for intensity based on total transaction count
                     const totalCount = Object.values(value.chains).reduce(
@@ -562,8 +585,8 @@ const OnchainScore = () => {
                     </>
                   )}
                   <li>
-                    💡 The wallet has performed transactions on {transactedChains.length}{" "}
-                    chain(s).
+                    💡 The wallet has performed transactions on{" "}
+                    {transactedChains.length} chain(s).
                   </li>
                   <li>
                     🌐 Transacted Chains:{" "}
@@ -594,8 +617,12 @@ const OnchainScore = () => {
                       💡 The total USD at risk from open token approvals is: $
                       {totalUsdAtRisk.toFixed(2)}
                     </li>
-                    {highestPosition && <li>{formatDeFiProtocolInteractionsSummary()}</li>}
-                    {highestPosition && <li>{formatDeFiPositionTypeSummary()}</li>}
+                    {highestPosition && (
+                      <li>{formatDeFiProtocolInteractionsSummary()}</li>
+                    )}
+                    {highestPosition && (
+                      <li>{formatDeFiPositionTypeSummary()}</li>
+                    )}
                     {netWorth > 0 && <li>{formatNetWorthSummary()}</li>}
                     {totalTrades > 0 && <li>{formatProfitabilitySummary()}</li>}
                     {
@@ -613,16 +640,16 @@ const OnchainScore = () => {
           )}
         </div>
         <a
-            href="https://developers.moralis.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src="https://moralis-portfolio-staging-f5f5e6cfeae8.herokuapp.com/images/Powered-by-Moralis-Badge-Text-Grey.svg"
-              alt="Powered by Moralis"
-              className="moralis-logo"
-            />
-          </a>
+          href="https://developers.moralis.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="https://moralis-portfolio-staging-f5f5e6cfeae8.herokuapp.com/images/Powered-by-Moralis-Badge-Text-Grey.svg"
+            alt="Powered by Moralis"
+            className="moralis-logo"
+          />
+        </a>
       </section>
     </div>
   );
